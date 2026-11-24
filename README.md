@@ -14,7 +14,7 @@ Panel web para consultar la flotilla, solicitar viajes e invitar conductores med
 
 ## Instalación en una carpeta nueva
 
-Si ya tienes la carpeta `panel-mototaxi`, ábrela directamente. Cuando exista un repositorio remoto, puedes obtener la misma versión con `git clone <URL_DEL_REPOSITORIO> panel-mototaxi`.
+Si ya tienes la carpeta `panel-mototaxi`, ábrela directamente. Con acceso al repositorio privado, puedes clonarlo con `git clone https://github.com/AngArambul/panel-mototaxi.git`.
 
 ```powershell
 Set-Location 'C:/Users/angel/AndroidStudioProjects/panel-mototaxi'
@@ -24,6 +24,8 @@ npm.cmd run build
 ```
 
 Crea el archivo de configuración únicamente si es una instalación nueva. Genera la clave una sola vez. Para usar SQLite, crea una base nueva y escribe su ruta absoluta en el archivo de entorno. Esto evita usar el archivo SQLite antiguo que quedó del esqueleto Laravel.
+
+Como alternativa a la instalación manual de dependencias y recursos, `composer setup` ejecuta Composer y npm desde los archivos de bloqueo. Inicializa la clave si crea el archivo de entorno. Configura la base de datos antes de ejecutar las migraciones por separado.
 
 ```powershell
 if (-not (Test-Path -LiteralPath '.env')) {
@@ -48,7 +50,7 @@ Abre [el panel local](http://127.0.0.1:8000). Para habilitar la flotilla, config
 
 ## Demostración en una base aislada
 
-Usa una consola nueva para ejecutar lo siguiente. La variable `DB_URL` se reemplaza por una URL SQLite de demostración para que una conexión heredada de PostgreSQL no controle las pruebas. El seeder comprueba que el entorno y el archivo sean de demostración y solicita una contraseña sintética sin mostrarla. No ejecutes el seeder genérico sobre la base operativa.
+Usa una consola nueva en la raíz del panel. La variable `DB_URL` se reemplaza por una URL SQLite de demostración para que una conexión heredada de PostgreSQL no controle las pruebas. El seeder comprueba que el entorno y el archivo sean de demostración y solicita, sin mostrarla, una contraseña sintética de 12 a 72 bytes.
 
 ```powershell
 $env:APP_ENV = 'local'
@@ -64,6 +66,7 @@ $env:MAIL_MAILER = 'array'
 if (-not (Test-Path -LiteralPath $env:DB_DATABASE)) {
     New-Item -Path $env:DB_DATABASE -ItemType File
 }
+php artisan config:clear
 php artisan migrate
 php artisan db:seed --class=DemonstrationSeeder
 php artisan serve --host=127.0.0.1 --port=8000
@@ -79,6 +82,17 @@ Las cuentas sintéticas son `admin@mototaxi.test`, `conductor@mototaxi.test` y `
 - **Servicios de Laravel**. El cliente HTTP transmite operaciones al backend con tiempos de espera y sin reintentar escrituras. Las notificaciones de recuperación usan el broker y el canal de correo. [Diseño técnico](docs/DOCUMENTO_TECNICO.md)
 - **WhatsApp**. Mantén las credenciales y la validación de firma en Node. El webhook Laravel conserva una ruta de compatibilidad y reenvía la petición a Node. La URL de Meta puede apuntar directamente a Node.
 - **Mapas**. El panel abre enlaces de Google Maps para ubicaciones conocidas. La visualización embebida, el GPS de unidades y Google Routes dependen de la aplicación Android y el backend. [Manual](docs/MANUAL_USUARIO_Y_DEMOSTRACION.md)
+
+## Comprobar la API en local
+
+Con el panel iniciado en el puerto 8000, consulta la ruta de perfil sin token. Debe devolver HTTP `401`.
+
+```powershell
+curl.exe -i -H "Accept: application/json" http://127.0.0.1:8000/api/user
+php artisan test --filter=ProfileTokenTest
+```
+
+Para comprobar el `200`, abre [Tokens de acceso](http://127.0.0.1:8000/perfil/tokens) con una cuenta sintética activa y genera un token. En Postman, importa la colección y el entorno local enlazados abajo. Coloca el valor en la variable local `perfil_token`, ejecuta el caso de perfil autorizado y revócalo desde la misma pantalla al terminar. La respuesta autorizada contiene `id_usuario`, `nombre` y `rol`. Si iniciaste el servidor en 8001, ajusta el puerto de la URL y de `base_url` en Postman. [Contrato completo, colección y resultados HTTP](docs/API.md)
 
 ## Verificación y entrega
 
@@ -105,6 +119,8 @@ La suite define SQLite en memoria y transporte de correo de pruebas en `phpunit.
 | --- | --- |
 | Vite no encuentra el manifiesto | Ejecuta `npm.cmd ci` y `npm.cmd run build`. |
 | No existe la tabla `usuarios` | Revisa la base seleccionada y corre `php artisan migrate:status` antes de aplicar migraciones. |
+| PHP busca `index.php` en la raíz | Ejecuta `php artisan serve --host=127.0.0.1 --port=8000` desde la raíz. El punto de entrada web es `public/index.php`. |
+| El seeder rechaza la longitud de la contraseña | Usa de 12 a 72 bytes. Con caracteres ASCII, cada carácter ocupa un byte. |
 | Despacho devuelve 401 | Inicia sesión web y conecta la flotilla con su cuenta propietaria de Node. |
 | Despacho devuelve 503 | Comprueba `DISPATCH_API_URL` y el endpoint `/health` del backend. |
 | La recuperación no entrega correo | Usa SMTP o un buzón de captura. El panel evita emitir enlaces cuando el mailer es `log`. |

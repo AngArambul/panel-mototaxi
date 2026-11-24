@@ -59,7 +59,7 @@ Una recepción válida sólo confirma que Node aceptó y registró el evento. La
 3. Para la habilidad incorrecta, abre `php artisan tinker` sobre la base desechable. Carga el usuario sintético indicando el email que usaste en la demostración y emite un token de cinco minutos. Colócalo sólo en el valor local de `perfil_token_otro`. PHPUnit prepara este caso automáticamente.
 
    ```php
-   $cuenta = App\Models\User::where('email', 'pasajero-sintetico@example.test')->firstOrFail();
+   $cuenta = App\Models\User::where('email', 'pasajero@mototaxi.test')->firstOrFail();
    $cuenta->createToken('prueba-sin-habilidad', ['otro'], now()->addMinutes(5))->plainTextToken;
    ```
 
