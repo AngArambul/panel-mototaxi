@@ -1,0 +1,10 @@
+Laravel 12.72.0 · PHP 8.2.12 · PostgreSQL operativo 18.6 identificado en lectura.
+Respaldo PostgreSQL local comprobado con pg_restore --list.
+Respaldo SQLite local comprobado con PRAGMA quick_check = ok.
+Rutas registradas: 43
+Entorno de prueba de Laravel: SQLite en memoria, Mail array y HTTP simulado.
+
+
+   INFO  Blade templates cached successfully.
+
+PostgreSQL local: migración aditiva auth_version aplicada después del respaldo. Conteo de cuentas y roles sin cambios antes y después. Seeder de demostración validado sobre una SQLite nueva.

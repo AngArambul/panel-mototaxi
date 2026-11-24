@@ -1,0 +1,16 @@
+Mototaxi • Comprobación HTTP local de Sanctum
+23 de noviembre de 2026
+Herramienta Node v26.13.0 (fetch) y servidor integrado PHP en 127.0.0.1:8018.
+Base SQLite recién migrada y datos sintéticos. No se tomaron datos del PostgreSQL operativo.
+GET /api/user
+
+Token de perfil activo — esperado 200; obtenido 200 — pasó
+Sin bearer — esperado 401; obtenido 401 — pasó
+Habilidad distinta — esperado 403; obtenido 403 — pasó
+Token vencido — esperado 401; obtenido 401 — pasó
+Token revocado — esperado 401; obtenido 401 — pasó
+Cuenta desactivada — esperado 403; obtenido 403 — pasó
+
+Validaciones de respuesta 200: sólo id_usuario, nombre, rol; UUID corresponde al titular del token; rol PASAJERO; Cache-Control: no-store.
+En denegaciones no se devolvió id_usuario.
+La colección Postman queda preparada; la ejecución registrada se hizo por HTTP con fetch.

@@ -1,0 +1,28 @@
+# Resultados y cierre de requisitos
+
+Entrega local de `panel-mototaxi` con pruebas sobre datos sintéticos. La línea base previa fue de 31 pruebas y 78 aserciones Laravel. La suite de entrega registró 43 pruebas y 201 aserciones. [PHPUnit](evidencias/phpunit.txt) Node se probó por separado en su suite de 28 casos y con un fixture HTTP local para verificar el puente. Para reproducir casos individuales consulte el [plan de pruebas](PLAN_PRUEBAS.md) y para los estados iniciales consulte [trazabilidad](DIAGNOSTICO_Y_TRAZABILIDAD.md). [Pruebas Node](evidencias/node-test.txt) · [Webhook HTTP](evidencias/webhook-http.txt)
+
+| Requisito | Implementación | Prueba realizada | Evidencia | Estado | Pendiente o limitación |
+|---|---|---|---|---|---|
+| R01 MVC y rutas | Controladores, grupos nombrados y model binding | Inventario de 43 rutas y casos de acceso directo y recurso inexistente | [Rutas](RUTAS.md), E02 | Cumplido y verificado | — |
+| R02 Middleware | `EnsureAccountIsActive`, alias `active.account`, sesión autenticada | Cuenta permitida y cuenta deshabilitada rechazadas según escenario | E02, E04 | Cumplido y verificado | — |
+| R03 Blade y formularios | Componentes comunes, alta/edición de cuenta, viaje e invitación | Errores por campo, CSRF 419, redirección y rechazo de reenvío de viaje | E02, E05, E06 | Cumplido y verificado | — |
+| R04 CRUD y relaciones | Cuentas de pasajero y conductor, baja lógica y reactivación | Suite comprueba hash, revocación y persistencia. Se comparó conteo real de cuentas y roles antes y después de migrar | E02, E05 | Cumplido y verificado | Migración `auth_version` aplicada tras respaldo. Conteos de cuentas y roles preservados |
+| R05 Operaciones de transporte | Flotilla Node, permisos y oferta transaccional | Prueba de competencia entre dos conductores y proxy con rol externo | E07 | Cumplido y verificado en entorno controlado | Conservar Node como fuente. La cancelación de viaje conserva su historial |
+| R06 Registro y sesión | Autenticación Laravel, rol fijo al registrarse | Alta manipulada, credenciales válidas e inválidas y cierre de sesión | E02, E03 | Cumplido y verificado | — |
+| R07 Contraseñas | Hash, cambio con contraseña actual y recuperación con broker | Revisión de hash persistido, recuperación simulada y enlace vencido | E02, E03 | Cumplido y verificado en pruebas | Entrega de correo real requiere transporte autorizado |
+| R08 Autorización | Policy de cuentas, middleware y rol propietario en Node | Acceso directo ajeno, 403 en español, manipulación y token sin permiso | E02, E04, E08 | Cumplido y verificado | — |
+| R09 Validaciones y fallos | Form Requests, control de duplicados, espera HTTP y avisos | Datos vacíos, repetidos, inválidos y respuesta de conexión fallida | E02, E06, E07 | Cumplido y verificado | — |
+| R10 Carga de archivos | Consigna revisada con información disponible | Inspección de los formularios del dominio | E01 | No aplicable | No hay carga de archivos de usuario en el alcance documentado |
+| R11 Servicios Laravel | Notifications y HTTP Client | Restablecimiento simulado y llamadas al despacho simuladas | E02, E07 | Cumplido y verificado en pruebas | Correo real y proveedor operativo se comprueban en su entorno |
+| R12 Paquete adicional | Sanctum 4.4.0 con tokens de perfil, expiración y revocación | Peticiones con token válido, ausente, insuficiente, vencido y revocado | E02, E08 | Cumplido y verificado | — |
+| R13 API y colección | Perfil limitado y webhook compatible | Cliente HTTP contra endpoint de perfil y contra puente a Node de prueba | [API](API.md), E08 | Cumplido y verificado en local | Colección de Postman preparada. La comprobación registrada usó Node fetch |
+| R14 Pruebas | Casos base y regresiones del panel | Suite PHPUnit con SQLite en memoria. Seeder repetido en SQLite aislada | [PHPUnit](evidencias/phpunit.txt), E10 | Cumplido y verificado | — |
+| R15 Usabilidad | Diseño adaptable, formularios etiquetados y navegación por rol | Chrome en 390 × 844, 768 × 1024 y 1440 × 900 px. Sin desborde y foco visible en login | E09 | Cumplido y verificado para pantallas comprobadas | Auditoría completa de accesibilidad y contraste aún pendiente |
+| R16 Configuración y secretos | Plantilla segura, exclusiones Git y archivos reales respaldados | Inspección de nombres y rastreo del repositorio local nuevo | E10, E11 | Parcialmente implementado | Historial previo y exposición fuera de esta copia requieren revisión separada |
+| R17 Manuales | README, manual, técnico, diccionario y matriz | Instalación desde archivo del código versionado con Composer y npm usando los archivos de bloqueo, seis migraciones, compilación y comprobación de arranque local | E01, E10 y [registro de instalación](evidencias/instalacion-limpia.txt) | Cumplido y verificado localmente | El catálogo del respaldo PostgreSQL es legible. Recuperación completa se verifica en una instancia independiente |
+| R18 Git / GitHub | Rama main, punto de partida y versión local | Consultar log, tag y remoto | E11 | Parcialmente implementado | GitHub necesita remoto y autorización para publicar |
+| R19 Bitácora y evidencia | Bitácora y guion detallados | Trazabilidad de archivos, comandos y resultados | E09, E12 | Parcialmente implementado | El estudiante confirma revisión, cambios propios y aprendizaje |
+| R20 Integración final | Compatibilidad del webhook, flujo Node y panel | Laravel a Node aislados, con entrada sintética. Pruebas de preservación y duplicados | E07, E08, E10 | Parcialmente implementado | WhatsApp, mapas y correo en vivo requieren credenciales y evidencia propias. El panel Laravel no está publicado |
+
+E01–E12 se desglosan en el [índice de evidencias](MANUAL_USUARIO_Y_DEMOSTRACION.md#índice-de-evidencias).

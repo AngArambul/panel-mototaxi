@@ -1,0 +1,40 @@
+
+> aramovil2-server@1.0.0 test
+> node --test test/*.test.js
+
+✔ webhook verification, raw signature and durable acknowledgement (514.5103ms)
+✔ production WhatsApp logs distinguish incoming messages, receipts and reply outcomes (400.2509ms)
+✔ complete WhatsApp location → confirmation → driver acceptance → states → completion (431.5934ms)
+✔ two drivers cannot accept the same trip, and an unrelated owner cannot modify it (354.5491ms)
+✔ same unit cannot accept two active requests (382.8655ms)
+✔ duplicate messages and confirmations produce only one trip (349.2018ms)
+✔ invalid or missing location, stale GPS and zero units are handled (344.1612ms)
+✔ no route provider never turns aerial distance into driving ETA (315.0297ms)
+✔ cancel, reject and request expiration release the conversation (373.0981ms)
+✔ privacy, role spoofing, state machine, logout and GPS ownership (374.6037ms)
+✔ fleet owner manages driver accounts and retains the assigned unit after deactivation (826.9496ms)
+✔ account validation rejects invalid fields without creating or changing records (611.2737ms)
+✔ explicit owner administrators can manage owner accounts and are protected (581.9709ms)
+✔ suspending a fleet cannot interrupt a trip and blocks its driver access (404.3145ms)
+✔ network retry survives failure; expired token is visible and not retried endlessly (324.3622ms)
+✔ 24-hour window uses a configured template; status callbacks do not create replies (427.6879ms)
+✔ OTP requires template outside explicit development; invitations gate driver enrollment (591.4412ms)
+✔ legacy import preserves original data, scope and SHA256 login migration (8.3538ms)
+✔ provider sends authentication template and Maps route field mask; safe Meta errors (2.8683ms)
+✔ signed WhatsApp inbox is visible only to authorized administrators and omits raw payloads (320.4891ms)
+✔ route previews validate coordinates and return Google route metrics and geometry (1097.8736ms)
+✔ manual trips store map coordinates and continue accepting the address-only request (403.6769ms)
+✔ an existing SQLite trips table adds destination coordinates without replacing records (78.6167ms)
+✔ all messages in a batch are processed in arrival order, including duplicate delivery receipts (355.1729ms)
+✔ location freshness and assignment are revalidated when the customer confirms (474.1662ms)
+✔ permanent template absence does not send free text beyond the service window (0.7733ms)
+✔ durable inbox, outbox and customer state survive reopening SQLite (363.4294ms)
+✔ credential recovery only requeues known rejections and preserves ambiguous delivery errors (788.251ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12236.5754

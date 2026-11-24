@@ -1,0 +1,17 @@
+Mototaxi • Prueba HTTP local del webhook Laravel → Node
+23 de noviembre de 2026
+Herramienta Node v26.13.0 (fetch), Laravel sobre PHP en loopback y backend Node en puerto efímero.
+Credenciales y carga sintéticas, SQLite en memoria; proveedores externos bloqueados y worker de respuesta deshabilitado.
+
+Desafío válido — esperado 200; obtenido 200 — pasó
+Token de verificación incorrecto — esperado 403; obtenido 403 — pasó
+Firma inválida — esperado 403; obtenido 403 — pasó
+Cuerpo firmado preservando espacios y saltos de línea — esperado 200; obtenido 200 — pasó
+Repetición del identificador de mensaje — esperado 200; obtenido 200 — pasó
+JSON malformado con firma válida — esperado 400; obtenido 400 — pasó
+Carga mayor de 262144 bytes — esperado 413; obtenido 413 — pasó
+Backend Node apagado — esperado 503; obtenido 503 — pasó
+
+SQLite: 0 filas antes de firma válida; 1 después de la recepción; 1 tras repetir el id.
+La verificación comprobó el cuerpo literal del desafío y el conteo received.
+La prueba no conectó a Meta ni envió WhatsApp.

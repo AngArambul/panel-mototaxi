@@ -1,0 +1,146 @@
+{
+  "checks": [
+    {
+      "case": "T15",
+      "check": "Laravel 12 migró SQLite desechable y se crearon tres cuentas sintéticas.",
+      "status": "OK"
+    },
+    {
+      "case": "T14",
+      "check": "Tab y Shift+Tab en login; foco visible en correo y contraseña.",
+      "status": "OK",
+      "focus": [
+        {
+          "campo": "email",
+          "indicador": true
+        },
+        {
+          "campo": "password",
+          "indicador": true
+        },
+        {
+          "campo": "remember_me",
+          "indicador": true
+        },
+        {
+          "campo": "A",
+          "indicador": true
+        },
+        {
+          "campo": "BUTTON",
+          "indicador": true
+        },
+        {
+          "campo": "BODY",
+          "indicador": false
+        }
+      ]
+    },
+    {
+      "case": "T04",
+      "check": "Alta, consulta, edición, baja lógica y reactivación vía formularios; comprobación en recarga y SQLite.",
+      "status": "OK"
+    },
+    {
+      "case": "T05",
+      "check": "Correo duplicado rechazado en formulario; conserva nombre/correo y limpia contraseña.",
+      "status": "OK"
+    },
+    {
+      "case": "T10",
+      "check": "UI Laravel conectó como propietario sintético y envió un viaje al doble HTTP de Node.",
+      "status": "OK (Node simulado)"
+    },
+    {
+      "case": "T06",
+      "check": "Visitante redirigido, pasajero recibe 403 ante URL directa y no aparece Usuarios en su navegación.",
+      "status": "OK"
+    }
+  ],
+  "dimensions": [
+    {
+      "screen": "Inicio de sesión",
+      "width": 390,
+      "height": 844,
+      "horizontalOverflow": false,
+      "visibleFieldsLabelled": true
+    },
+    {
+      "screen": "Usuarios tras crear un conductor sintético",
+      "width": 768,
+      "height": 1024,
+      "horizontalOverflow": false,
+      "visibleFieldsLabelled": true
+    },
+    {
+      "screen": "Registro editado y desactivado",
+      "width": 768,
+      "height": 1024,
+      "horizontalOverflow": false,
+      "visibleFieldsLabelled": true
+    },
+    {
+      "screen": "Valor duplicado, campos conservados y contraseña limpia",
+      "width": 768,
+      "height": 1024,
+      "horizontalOverflow": false,
+      "visibleFieldsLabelled": true
+    },
+    {
+      "screen": "Despacho conectado al doble HTTP de Node",
+      "width": 1440,
+      "height": 900,
+      "horizontalOverflow": false,
+      "visibleFieldsLabelled": true
+    },
+    {
+      "screen": "403 al intentar administrar con pasajero sintético",
+      "width": 1440,
+      "height": 900,
+      "horizontalOverflow": false,
+      "visibleFieldsLabelled": true
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "movil-390x844.png",
+      "screen": "Inicio de sesión",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "tableta-768x1024.png",
+      "screen": "Usuarios tras crear un conductor sintético",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "file": "crud-usuarios.png",
+      "screen": "Registro editado y desactivado",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "file": "validacion-formularios.png",
+      "screen": "Valor duplicado, campos conservados y contraseña limpia",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "file": "escritorio-1440x900.png",
+      "screen": "Despacho conectado al doble HTTP de Node",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "acceso-denegado.png",
+      "screen": "403 al intentar administrar con pasajero sintético",
+      "width": 1440,
+      "height": 900
+    }
+  ],
+  "browser": "Chrome/158.0.8127.36",
+  "database": "SQLite desechable",
+  "dispatch": "Doble HTTP en memoria con respuestas de propietario y unidades sintéticas",
+  "assetFontsBlocked": true
+}
