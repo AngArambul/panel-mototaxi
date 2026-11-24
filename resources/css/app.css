@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+#dispatch-login[hidden],
+#dispatch-content[hidden] {
+    display: none;
+}

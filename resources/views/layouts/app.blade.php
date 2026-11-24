@@ -28,9 +28,12 @@
             @endisset
 
             <!-- Page Content -->
-            <main>
+            <main id="contenido">
                 {{ $slot }}
             </main>
+            <footer class="mx-auto max-w-7xl px-4 py-6 text-sm text-gray-700">
+                <a class="underline" href="{{ route('legal') }}">Privacidad y eliminación de datos</a>
+            </footer>
         </div>
     </body>
 </html>

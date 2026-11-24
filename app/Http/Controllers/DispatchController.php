@@ -2,75 +2,132 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DispatchInvitationRequest;
+use App\Http\Requests\DispatchTripRequest;
+use App\Services\DispatchClient;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\ConnectionException;
 
 class DispatchController extends Controller
 {
-    public function login(Request $request)
+    public function __construct(private DispatchClient $client) {}
+
+    public function login(Request $request): JsonResponse|RedirectResponse
     {
-        $credentials = $request->validate(['telefono' => ['required', 'regex:/^[0-9]{10}$/'], 'password' => ['required', 'string', 'max:128']]);
-        try {
-            $response = Http::connectTimeout(3)->timeout(15)->post($this->url('/api/auth/login'), $credentials);
-        } catch (ConnectionException $exception) {
-            return response()->json(['ok' => false, 'msg' => 'Servidor de despacho inaccesible.'], 503);
+        $credentials = $request->validate([
+            'telefono' => ['required', 'regex:/^[0-9]{10}$/'],
+            'password' => ['required', 'string', 'max:128'],
+        ]);
+        $response = $this->client->request('POST', '/api/auth/login', null, $credentials);
+        $token = $response?->json('token');
+
+        if ($response === null || $response->serverError()) {
+            return $this->result($request, 'Servidor de despacho inaccesible.', 503);
         }
-        if ($response->failed()) {
-            return response()->json(['ok' => false, 'msg' => 'No se pudo iniciar la sesión de despacho.'], $response->status());
+        if (! $response->successful()) {
+            return $this->result($request, 'No se pudo iniciar la sesión de despacho.', $response->clientError() ? $response->status() : 502);
+        }
+        if (! is_string($token) || $token === '') {
+            return $this->result($request, 'El servidor no entregó una sesión de despacho.', 502);
         }
         if ($response->json('usuario.rol') !== 'PROPIETARIO') {
-            Http::withToken($response->json('token'))->timeout(5)->post($this->url('/api/auth/logout'));
-            return response()->json(['ok' => false, 'msg' => 'Se requiere una cuenta de propietario.'], 403);
+            $this->client->request('POST', '/api/auth/logout', $token);
+            return $this->result($request, 'Se requiere una cuenta de propietario.', 403);
         }
-        $request->session()->regenerate();
-        $request->session()->put('dispatch_token', Crypt::encryptString($response->json('token')));
-        return response()->json(['ok' => true, 'msg' => 'Flotilla conectada.']);
+
+        $request->session()->regenerate(true);
+        $request->session()->put('dispatch_token', Crypt::encryptString($token));
+
+        return $this->result($request, 'Flotilla conectada.');
     }
 
-    public function data(Request $request)
+    public function data(Request $request): JsonResponse
     {
         return $this->proxy($request, 'GET', '/api/unidades');
     }
 
-    public function createTrip(Request $request)
+    public function createTrip(DispatchTripRequest $request): JsonResponse|RedirectResponse
     {
-        $request->validate(['origen' => 'required|string|max:300', 'destino' => 'required|string|max:300',
-            'numeroUnidad' => 'required|string|max:4', 'pasajero' => 'nullable|string|max:120']);
-        return $this->proxy($request, 'POST', '/api/viajes', $request->only('origen', 'destino', 'numeroUnidad', 'pasajero'));
+        return $this->submit($request, 'trip', '/api/viajes', $request->validated());
     }
 
-    public function invitation(Request $request)
+    public function invitation(DispatchInvitationRequest $request): JsonResponse|RedirectResponse
     {
-        $request->validate(['numeroUnidad' => 'required|string|max:4']);
-        return $this->proxy($request, 'POST', '/api/unidades/invitacion', $request->only('numeroUnidad'));
+        return $this->submit($request, 'invitation', '/api/unidades/invitacion', $request->validated());
     }
 
-    public function integration(Request $request)
+    public function integration(Request $request): JsonResponse
     {
         return $this->proxy($request, 'GET', '/api/integraciones/estado');
     }
 
-    private function proxy(Request $request, string $method, string $path, array $data = [])
+    private function submit(Request $request, string $form, string $path, array $data): JsonResponse|RedirectResponse
     {
-        if (! $request->session()->has('dispatch_token')) {
+        if (! $request->expectsJson()) {
+            $key = 'dispatch_forms.'.$form;
+            $expected = $request->session()->get($key);
+            $submitted = $request->input('_submission');
+            if (! is_string($expected) || ! is_string($submitted) || ! hash_equals($expected, $submitted)) {
+                return $this->result($request, 'El formulario ya se usó o venció. Recarga el panel antes de enviarlo.', 409);
+            }
+            $request->session()->forget($key);
+        }
+
+        $response = $this->proxy($request, 'POST', $path, $data);
+        if ($request->expectsJson()) {
+            return $response;
+        }
+
+        $message = $response->getData()->msg ?? 'Operación completada.';
+        $redirect = $this->result($request, $message, $response->getStatusCode());
+        if (! $response->isSuccessful()) {
+            return $redirect->withInput($data);
+        }
+        if ($form === 'invitation') {
+            $code = $response->getData()->codigoInvitacion ?? null;
+            return $redirect->with('dispatch_invitation', $code);
+        }
+        return $redirect;
+    }
+
+    private function proxy(Request $request, string $method, string $path, array $data = []): JsonResponse
+    {
+        $session = $request->session();
+        try {
+            $token = $session->has('dispatch_token') ? Crypt::decryptString($session->get('dispatch_token')) : null;
+        } catch (DecryptException) {
+            $session->forget('dispatch_token');
+            $token = null;
+        }
+        if ($token === null) {
             return response()->json(['ok' => false, 'msg' => 'Conecta tu cuenta de propietario.'], 401);
         }
-        $token = Crypt::decryptString($request->session()->get('dispatch_token'));
-        try {
-            $response = Http::withToken($token)->acceptJson()->connectTimeout(3)->timeout(15)->send($method, $this->url($path), ['json' => $data]);
-        } catch (ConnectionException $exception) {
+
+        $response = $this->client->request($method, $path, $token, $data);
+        if ($response === null || $response->serverError()) {
             return response()->json(['ok' => false, 'msg' => 'Servidor de despacho inaccesible.'], 503);
         }
         if ($response->status() === 401) {
-            $request->session()->forget('dispatch_token');
+            $session->forget('dispatch_token');
         }
-        return response()->json($response->json() ?: ['ok' => false, 'msg' => 'El servidor no respondió correctamente.'], $response->status());
+        $json = $response->json();
+        if ($response->redirect() || ! is_array($json)) {
+            return response()->json(['ok' => false, 'msg' => 'El servidor no respondió correctamente.'], 502);
+        }
+
+        return response()->json($json, $response->status())->header('Cache-Control', 'no-store');
     }
 
-    private function url(string $path): string
+    private function result(Request $request, string $message, int $status = 200): JsonResponse|RedirectResponse
     {
-        return rtrim(config('services.dispatch.url'), '/').$path;
+        $success = $status < 300;
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => $success, 'msg' => $message], $status);
+        }
+
+        return to_route('dashboard')->with($success ? 'status' : 'dispatch_error', $message);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
@@ -13,33 +14,34 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasApiTokens;
 
-    // 1. Configurarmos el nombre de la tabla
+    public const ADMINISTRATOR = 'ADMINISTRADOR';
+    public const DRIVER = 'CONDUCTOR';
+    public const PASSENGER = 'PASAJERO';
+    public const MANAGED_ROLES = [self::PASSENGER, self::DRIVER];
+    public const AUTH_VERSION_SESSION_KEY = 'account.auth_version';
+
     protected $table = 'usuarios';
 
-    // 2. Configurarmos la clave primaria y su tipo
     protected $primaryKey = 'id_usuario';
     public $incrementing = false;
     protected $keyType = 'string';
 
-    // 3. Desactivamos las marcas de tiempo si no las estás utilizando
     public $timestamps = false;
 
-    // 4. Configuramos los campos que se pueden asignar masivamente
+    protected $attributes = ['activo' => true, 'rol' => self::PASSENGER];
+
     protected $fillable = [
         'name',
-        'id_usuario',
         'nombre',
         'email',
         'password',
         'telefono',
-        'rol',
     ];
 
     protected static function booted(): void
     {
         static::creating(function (User $user) {
             $user->id_usuario ??= (string) Str::uuid();
-            $user->rol ??= 'PASAJERO';
         });
     }
 
@@ -57,13 +59,38 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'auth_version',
     ];
-    // 5. Configuramos los casts de los atributos
+
+    public function isAdministrator(): bool
+    {
+        return $this->rol === self::ADMINISTRATOR;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->activo === true;
+    }
+
+    public function revokeAccess(): void
+    {
+        $previousEmail = $this->getRawOriginal('email');
+        $this->auth_version = (string) Str::uuid();
+        $this->setRememberToken(Str::random(60));
+        $this->save();
+        $this->tokens()->delete();
+
+        if ($previousEmail !== null) {
+            DB::table(config('auth.passwords.users.table'))->where('email', $previousEmail)->delete();
+        }
+    }
+
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
             'email_verified_at' => 'datetime',
+            'activo' => 'boolean',
         ];
     }
 }

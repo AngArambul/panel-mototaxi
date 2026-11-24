@@ -17,6 +17,10 @@ class EmailVerificationNotificationController extends Controller
             return redirect()->intended(route('dashboard', absolute: false));
         }
 
+        if (! $request->user()->email || config('mail.default') === 'log') {
+            return back()->withErrors(['email' => 'El correo de verificación no está disponible.']);
+        }
+
         $request->user()->sendEmailVerificationNotification();
 
         return back()->with('status', 'verification-link-sent');

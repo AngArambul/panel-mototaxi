@@ -58,4 +58,36 @@ class DispatchIntegrationTest extends TestCase
         $this->post('/register', ['name' => 'New person', 'email' => 'new@example.test', 'password' => 'password123', 'password_confirmation' => 'password123', 'rol' => 'ADMINISTRADOR'])->assertRedirect('/dashboard');
         $this->assertSame('PASAJERO', User::where('email', 'new@example.test')->firstOrFail()->rol);
     }
+
+    public function test_trip_form_redirects_and_replayed_submission_is_rejected(): void
+    {
+        Http::fake(['*/api/viajes' => Http::response(['ok' => true, 'msg' => 'Viaje registrado.'])]);
+        $this->actingAs(User::factory()->create())->withSession([
+            'dispatch_token' => Crypt::encryptString('synthetic-owner'),
+            'dispatch_forms.trip' => 'single-use',
+        ]);
+        $body = ['origen' => 'Origen sintético', 'destino' => 'Destino sintético', 'numeroUnidad' => '01', '_submission' => 'single-use', 'owner_id' => 'unauthorized'];
+        $this->post(route('dispatch.trips.store'), $body)->assertRedirect(route('dashboard'))->assertSessionHas('status', 'Viaje registrado.');
+        $this->post(route('dispatch.trips.store'), $body)->assertRedirect(route('dashboard'))->assertSessionHas('dispatch_error');
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($request) => $request->data() === ['origen' => 'Origen sintético', 'destino' => 'Destino sintético', 'numeroUnidad' => '01']);
+    }
+
+    public function test_invalid_web_and_json_payloads_do_not_reach_dispatch(): void
+    {
+        Http::fake();
+        $this->actingAs(User::factory()->create());
+        $this->from(route('dashboard'))->post(route('dispatch.trips.store'), ['origen' => '', 'numeroUnidad' => 'x'])
+            ->assertRedirect(route('dashboard'))->assertSessionHasErrors(['origen', 'destino', 'numeroUnidad']);
+        $this->postJson(route('dispatch.invitations.store'), ['numeroUnidad' => '12345'])->assertUnprocessable()->assertJsonValidationErrors('numeroUnidad');
+        Http::assertNothingSent();
+    }
+
+    public function test_invitation_keeps_node_permission_check_and_connection_failure(): void
+    {
+        $this->actingAs(User::factory()->create())->withSession(['dispatch_token' => Crypt::encryptString('synthetic-owner')]);
+        Http::fake(['*/api/unidades/invitacion' => Http::sequence()->push(['ok' => false, 'msg' => 'Unidad ajena.'], 403)->push(['ok' => false], 503)]);
+        $this->postJson(route('dispatch.invitations.store'), ['numeroUnidad' => '02'])->assertForbidden();
+        $this->postJson(route('dispatch.invitations.store'), ['numeroUnidad' => '02'])->assertStatus(503)->assertJson(['ok' => false]);
+    }
 }
